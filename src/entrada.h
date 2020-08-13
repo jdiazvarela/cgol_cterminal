@@ -58,6 +58,11 @@ typedef size_t entrada_clave;
     (entrada) & ( ~ENTRADA_MODIFICADORES ) \
   )
 
+#define entrada_soloModificadores( entrada ) \
+  ( \
+    (entrada) & ( ENTRADA_MODIFICADORES ) \
+  )
+
 // leer entradas de la terminal
 entrada_clave entrada_leer() {
 

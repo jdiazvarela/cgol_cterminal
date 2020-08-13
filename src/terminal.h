@@ -136,6 +136,18 @@ typedef struct struct_terminalSuperficie terminalSuperficie;
 	superf.color = NULL; \
   }
 
+#define terminalSuperficie_despejar( superf ) \
+  { \
+  	if ( superf.data != NULL ) { \
+  		free( superf.data ); \
+    	superf.data = NULL; \
+	}; \
+	if ( superf.color != NULL ) { \
+		free( superf.color ); \
+		superf.color = NULL; \
+	}; \
+  }
+
 // esto es pa limpiar los buffferrsssss internos
 int pTerminalSuperficie_limpiar( terminalSuperficie * pSuperf ) {
 
@@ -379,6 +391,16 @@ struct struct_terminalBuffer {
 };
 
 typedef struct struct_terminalBuffer terminalBuffer;
+
+#define terminalBuffer_despejar( tbuff ) \
+  { \
+    if ( tbuff.superficie != NULL ) \
+      for ( size_t i = 0; i < tbuff.superficies; i++ ) \
+        terminalSuperficie_despejar( tbuff.superficie[ i ] ); \
+    free( tbuff.superficie ); \
+    tbuff.superficie = NULL; \
+    tbuff.superficies = 0; \
+  }
 
 // pa largar despues de declarar (la idea es usar esto con struct y punteros...)
 #define terminalBuffer_construir( buffer ) \
