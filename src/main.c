@@ -199,10 +199,10 @@ int main( const int argumentos_cantidad, const char ** argumentos_lista ) {
 				if ( entrada == ENTRADA_ERROR ) break;
 
 				// ctrl + c  ; ctrl + c
-				if ( entrada == 3 || entrada == 4 || entrada == 'q' ) break;
+				if ( entrada == 3 || entrada == 4 || entrada == 27 ) break;
 
 				// pausa/continuar
-				if ( entrada == 'p' ) {
+				if ( entrada == ' ' ) {
 					continuar = 1 - continuar;
 					if ( continuar > 0 ) editando = 0;
 				};
@@ -233,14 +233,14 @@ int main( const int argumentos_cantidad, const char ** argumentos_lista ) {
 				};
 
 				// enter / espacio
-				if ( entrada == 13 || entrada == ' ' || entrada == 'c' ) {
+				if ( entrada == 13 || entrada == 'e' ) {
 					editando = 1;
 					paso = 0;
 					continuar = 0;
 				};
 
 				// 'n'   clear ... despejar limpiar,,.. . etc...
-				if ( entrada == 'n' ) {
+				if ( entrada == 'z' ) {
 					for ( size_t t = 0; t < 2 * supGOL.filas * supGOL.columnas; t++) tableros[ t ] = 0;
 					paso = 1;
 					editando = 1;
@@ -300,7 +300,7 @@ int main( const int argumentos_cantidad, const char ** argumentos_lista ) {
 					terminalSuperficie_escribir( supGUI, supGOL.x0 - 1, cY, f, b, ">", 1 );
 					terminalSuperficie_escribir( supGUI, supGOL.x0 + supGOL.columnas, cY, f, b, "<", 1 );
 
-					if ( entrada == 13 || entrada == ' ' || entrada == 'c' ) {
+					if ( entrada == 13 || entrada == 'e' ) {
 						size_t x = cX - supGOL.x0;
 						size_t y = cY - supGOL.y0;
 
@@ -316,9 +316,9 @@ int main( const int argumentos_cantidad, const char ** argumentos_lista ) {
 				size_t l;
 
 				// data
-				l = snprintf( temporal, temporal_limite, "[q]: salir; [r]: reinicio; [f]: paso; [n]: despejar [p]: pausar/continuar;" );
+				l = snprintf( temporal, temporal_limite, "[esc]: salir; [r]: reinicio; [f]: paso; [z]: despejar [barra]: pausar/continuar;" );
 				terminalSuperficie_escribir( supGUI, 0, 0, 0, 0, temporal, l );
-				l = snprintf( temporal, temporal_limite, "[flechas/wasd]: mover; [enter/barra/c]: cambiar;" );
+				l = snprintf( temporal, temporal_limite, "[flechas/wasd]: mover; [enter/e]: cambiar;" );
 				terminalSuperficie_escribir( supGUI, 0, 1, 0, 0, temporal, l );
 				l = snprintf( temporal, temporal_limite, "dims: %ld x %ld; cursor: %ld,%ld; vivos: %ld;", supGOL.columnas, supGOL.filas, cX, cY, vivos );
 				terminalSuperficie_escribir( supGUI, 0, 2, 0, 0, temporal, l );
@@ -329,7 +329,6 @@ int main( const int argumentos_cantidad, const char ** argumentos_lista ) {
 				for ( int y = 0; y < (int)supGOL.filas; y++ )
 					for ( int x = 0; x < (int)supGOL.columnas; x++ )
 						terminalSuperficie_escribir( supGOL, x, y, 36, 40, ( tableros[ i * supGOL.filas * supGOL.columnas + ( y * supGOL.columnas ) + x ] ) ? "o" : " ", 1 );
-
 
 				if ( continuar || paso ) {
 					// si era solo un paso se descontinua
