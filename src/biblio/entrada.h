@@ -1,5 +1,9 @@
-#ifndef entrada_h
-#define entrada_h
+#ifndef biblio_entrada_h
+#define biblio_entrada_h
+
+
+#pragma once
+// -- INCLUSIONES
 
 #include <errno.h>
 // errno
@@ -10,8 +14,14 @@
 // #STDIN_FILENO
 // read()
 
-// claves para identificar entradas
-typedef size_t entrada_clave;
+
+// -- DEFINICIONES
+
+// claves para identificar entradas (definicion de tipo)
+typedef size_t claveDeEntrada;
+
+
+// -- CONSTANTES
 
 // entradas con combinaciones de chars
 #define ENTRADA_ARRIBA               260
@@ -39,9 +49,10 @@ typedef size_t entrada_clave;
 #define ENTRADA_MOUSE_IZQUIERDO   262144 // 19
 #define ENTRADA_MOUSE_DERECHO     524288 // 20
 
+// todos los modificadores en una sola variable
 #define ENTRADA_MODIFICADORES \
   ( \
-    ( (entrada_clave) 0 ) \
+    ( (claveDeEntrada) 0 ) \
     | ENTRADA_SOLTAR \
     | ENTRADA_ALT \
     | ENTRADA_ALT_GR \
@@ -53,21 +64,19 @@ typedef size_t entrada_clave;
     | ENTRADA_CONTROL_DERECHO \
   )
 
-#define entrada_sinModificadores( entrada ) \
-  ( \
-    (entrada) & ( ~ENTRADA_MODIFICADORES ) \
-  )
 
-#define entrada_soloModificadores( entrada ) \
-  ( \
-    (entrada) & ( ENTRADA_MODIFICADORES ) \
-  )
+// -- FUNCIONES
+
+// limpiar los modificadores de la entrada indicada
+#define entrada_sinModificadores( entrada ) ( (entrada) & ( ~ENTRADA_MODIFICADORES ) )
+// obtener los modificadores de la entrada indicada
+#define entrada_soloModificadores( entrada ) ( (entrada) & ( ENTRADA_MODIFICADORES ) )
 
 // leer entradas de la terminal
-entrada_clave entrada_leer() {
+claveDeEntrada entrada_leer() {
 
 	int leidos;
-	char buffer[ 6 ];
+	char buffer[ 6 ] = { '\0', '\0', '\0', '\0', '\0', '\0' };
 
 	while ( 1 ) {
 		leidos = read( STDIN_FILENO, & buffer[ 0 ], 1 );
@@ -77,16 +86,19 @@ entrada_clave entrada_leer() {
 		if ( leidos == 1 ) break;
 	};
 
-	//printf ( "char leido %d '%c'\r\n", buffer[ 0 ], buffer[ 0 ] );
-
 	if ( buffer[ 0 ] == 27 ) {
+
+		// 27 ?? ?? ?? / ?? ??
 
 		// si no hay nada... era solo la tecla de escape
 		if ( read( STDIN_FILENO, & buffer[ 1 ], 1 ) != 1 ) return 27;
 		if ( read( STDIN_FILENO, & buffer[ 2 ], 1 ) != 1 ) return 27;
 
-		// \e[
-		if ( buffer[ 1 ] == '[' ) {
+		// 27 xx xx ?? / ?? ??
+
+		if ( buffer[ 1 ] == 91 ) {
+
+			// 27 91 xx ?? / ?? ??
 
 			if ( ! (
 				( ( buffer[ 2 ] > 48 ) && ( buffer[ 2 ] < 55 ) && ( buffer[ 2 ] != 52 ) )
@@ -94,18 +106,26 @@ entrada_clave entrada_leer() {
 				( ( buffer[ 2 ] > 64 ) && ( buffer[ 2 ] < 73 ) && ( buffer[ 2 ] != 69 ) && ( buffer[ 2 ] != 71 ) )
 			) ) return 27;
 
+			// 27 91 [49-54,!=52,65-72,!=69,!=71] ?? / ?? ??
+
 			if ( buffer[ 2 ] == 49 ) {
 
-				// 27 91 49 59 [50-53] [65-72,!=71]
+				// se buscan solo combos de 6 chars
+				// 27 91 49 ?? ?? ??
 
 				if ( read( STDIN_FILENO, & buffer[ 3 ], 1 ) != 1 ) return 27;
 				if ( read( STDIN_FILENO, & buffer[ 4 ], 1 ) != 1 ) return 27;
 				if ( read( STDIN_FILENO, & buffer[ 5 ], 1 ) != 1 ) return 27;
 
+				// 27 91 49 xx xx xx
+
 				if ( buffer[ 3 ] != 59 ) return 27;
+
+				// 27 91 49 59 xx xx
 
 				size_t salida = 0;
 
+				// se identifica la salida
 				switch( buffer[ 5 ] ) {
 					case 65 : salida = ENTRADA_ARRIBA; break;
 					case 66 : salida = ENTRADA_ABAJO; break;
@@ -116,11 +136,14 @@ entrada_clave entrada_leer() {
 					default : return 27;
 				};
 
+				// 27 91 49 59 xx [65-72,!=69,!=71]
+
+				// se identifica el modificador
 				switch( buffer[ 4 ] ) {
-					case 50 : return salida + ENTRADA_SHIFT; break;
-					case 51 : return salida + ENTRADA_ALT; break;
-					case 52 : return salida + ENTRADA_ALT + ENTRADA_SHIFT; break;
-					case 53 : return salida + ENTRADA_CONTROL; break;
+					case 50 : return salida | ENTRADA_SHIFT; break;
+					case 51 : return salida | ENTRADA_ALT; break;
+					case 52 : return salida | ENTRADA_ALT + ENTRADA_SHIFT; break;
+					case 53 : return salida | ENTRADA_CONTROL; break;
 					default : return 27;
 				};
 
@@ -128,14 +151,19 @@ entrada_clave entrada_leer() {
 			}
 			else {
 
-				if ( ( buffer[ 2 ] > 49 ) && ( buffer[ 2 ] < 53 ) && ( buffer[ 2 ] != 52 ) ) {
+				// 27 91 [49-54,!=52,65-72,!=69,!=71] ?? / ?? ??
 
-					// 27 91 [50,54,!=52] xx / xx xx
+				if ( ( buffer[ 2 ] > 49 ) && ( buffer[ 2 ] < 55 ) && ( buffer[ 2 ] != 52 ) ) {
+
+					// 27 91 [50,54,!=52] ?? / ?? ??
 
 					if ( read( STDIN_FILENO, & buffer[ 3 ], 1 ) != 1 ) return 27;
 
+					// 27 91 [50,54,!=52] xx / ?? ??
+
 					if ( buffer[ 3 ] == 126 ) {
 
+						// solo combos de 4 chars
 						// 27 91 [50,54,!=52] 126
 
 						switch( buffer[ 2 ] ) {
@@ -148,15 +176,20 @@ entrada_clave entrada_leer() {
 					}
 					else if ( buffer[ 3 ] == 59 ) {
 
-						// 27 91 [50,54,!=52] 59 [50,53] 126
+						// 27 91 [50,54,!=52] 59 ?? ??
 
 						if ( read( STDIN_FILENO, & buffer[ 4 ], 1 ) != 1 ) return 27;
 						if ( read( STDIN_FILENO, & buffer[ 5 ], 1 ) != 1 ) return 27;
 
+						// 27 91 [50,54,!=52] 59 xx xx
+
 						if ( buffer[ 5 ] != 126 ) return 27;
+
+						// 27 91 [50,54,!=52] 59 xx 126
 
 						size_t salida = 0;
 
+						// se identifica la salida
 						switch( buffer[ 2 ] ) {
 							case 50 : return salida = ENTRADA_INSERTAR; break;
 							case 51 : return salida = ENTRADA_SUPRIMIR; break;
@@ -165,11 +198,14 @@ entrada_clave entrada_leer() {
 							default : return 27;
 						};
 
+						// 27 91 [50,54,!=52] 59 xx 126
+
+						// y los modificadores
 						switch( buffer[ 4 ] ) {
-							case 50 : return salida + ENTRADA_SHIFT; break;
-							case 51 : return salida + ENTRADA_ALT; break;
-							case 52 : return salida + ENTRADA_ALT + ENTRADA_SHIFT; break;
-							case 53 : return salida + ENTRADA_CONTROL; break;
+							case 50 : return salida | ENTRADA_SHIFT; break;
+							case 51 : return salida | ENTRADA_ALT; break;
+							case 52 : return salida | ENTRADA_ALT + ENTRADA_SHIFT; break;
+							case 53 : return salida | ENTRADA_CONTROL; break;
 							default : return 27;
 						};
 					}
@@ -178,6 +214,11 @@ entrada_clave entrada_leer() {
 					};
 				}
 				else {
+
+					// combinaciones de 3 chars????
+
+					// 27 91 [65-72,!=69,!=71]
+
 					switch ( buffer[ 2 ] ) {
 						case 65 : return ENTRADA_ARRIBA;
 						case 66 : return ENTRADA_ABAJO;
@@ -196,5 +237,6 @@ entrada_clave entrada_leer() {
 		return buffer[ 0 ];
 	};
 };
+
 
 #endif
